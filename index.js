@@ -19,6 +19,7 @@ async function run() {
     try {
         await client.connect();
         const partCollection = client.db('saltburn-auto').collection('parts');
+        const orderCollection = client.db('saltburn-auto').collection('orders');
 
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -26,6 +27,17 @@ async function run() {
             const parts = await cursor.toArray();
             res.send(parts);
         })
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = orderCollection.insertOne(order);
+            res.send({ success: true, result });
+        })
+
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
     }
     finally {
 
