@@ -28,6 +28,31 @@ async function run() {
             res.send(parts);
         })
 
+        app.get('/available', async (req, res) => {
+            const query = {};
+            const products = await partCollection.find(query).toArray();
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+
+            products.forEach(product => {
+                const productOrders = orders.filter(o => o.part === product.name);
+                const ordered = productOrders.map(q => q.quantity);
+                const arrOfOrdered = ordered.map(str => {
+                    return Number(str);
+                })
+                let sum = 0;
+                for (let num of arrOfOrdered) {
+                    sum = sum + num;
+                }
+                product.ordered = sum;
+                const available = product.available - sum;
+                console.log(available);
+                product.available = available;
+            })
+
+            res.send(products);
+        })
+
         app.post('/order', async (req, res) => {
             const order = req.body;
             const result = orderCollection.insertOne(order);
