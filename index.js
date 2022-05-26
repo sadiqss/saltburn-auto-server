@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
@@ -20,12 +21,26 @@ async function run() {
         await client.connect();
         const partCollection = client.db('saltburn-auto').collection('parts');
         const orderCollection = client.db('saltburn-auto').collection('orders');
+        const userCollection = client.db('saltburn-auto').collection('users');
 
         app.get('/parts', async (req, res) => {
             const query = {};
             const cursor = partCollection.find(query);
             const parts = await cursor.toArray();
             res.send(parts);
+        })
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token });
         })
 
         app.get('/available', async (req, res) => {
@@ -66,11 +81,6 @@ async function run() {
             const result = orderCollection.insertOne(order);
             res.send({ success: true, result });
         })
-
-        app.get('/user', async (req, res) => {
-            const users = await userCollection.find().toArray();
-            res.send(users);
-        });
     }
     finally {
 
