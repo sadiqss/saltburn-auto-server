@@ -53,6 +53,14 @@ async function run() {
             res.send(products);
         })
 
+        app.get('/order', async (req, res) => {
+            const buyer = req.query.buyer;
+            const query = { buyer: buyer };
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
+        })
+
         app.post('/order', async (req, res) => {
             const order = req.body;
             const result = orderCollection.insertOne(order);
